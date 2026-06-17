@@ -57,34 +57,38 @@ it cannot edit files, write files, or run arbitrary shell commands.
 
 ### How to spawn a critic
 
-\`--offline -ne\` are required: they skip pi's startup network operations (otherwise the
-child can hang for minutes) and don't load this extension inside the child.
+**Using the \`subagent\` tool** (preferred when available — handles output, avoids shell escaping):
+\`\`\`json
+{
+  "agent": "reviewer",
+  "task": "Read <concrete file paths> first. NEVER assume features that aren't in the code. Review based only on what you actually read. Focus on <specific angle>."
+}
+\`\`\`
+Critic Guy persona is already loaded by the subagent's system prompt, so use a concise task.
+Give the subagent concrete file paths and tell it to read files first — this prevents
+hallucinations where the reviewer reports tests or features that don't exist.
 
-**Single review** (small scope):
+**Using bash** (always works; \`--offline -ne\` skips network ops so the child doesn't hang):
 \`\`\`bash
 pi -p --offline -ne --no-session -nc --model "${modelId}" --tools ${CRITIC_TOOLS} \\
   --append-system-prompt "${CRITIC_PERSONA}" \\
   "Task: <describe what to review — include concrete file paths so the critic can read them>"
 \`\`\`
 
-**Parallel reviews** (large scope — split into focused subagents). Each critic writes to
-its own file so their outputs don't interleave; only \`<target>\` is a placeholder — keep the
-shell variables (\`\$focus\`, \`\$i\`, \`\$d\`) as written:
+**Parallel reviews** (large scope — split into focused subagents):
 \`\`\`bash
-d=\$(mktemp -d); i=0
-for focus in "Correctness and edge cases" "Design and architecture" "Error handling and robustness"; do
+d=$(mktemp -d); i=0
+for focus in "Correctness" "Design" "Error handling"; do
   pi -p --offline -ne --no-session -nc --model "${modelId}" --tools ${CRITIC_TOOLS} \\
     --append-system-prompt "${CRITIC_PERSONA}" \\
-    "Task: Review <target>. Focus exclusively on: \$focus" > "\$d/\$i.txt" 2>&1 &
-  i=\$((i + 1))
+    "Task: Review <target>. Focus exclusively on: $focus" > "$d/$i.txt" 2>&1 &
+  i=$((i + 1))
 done
-wait
-# Print each review under its own header (order matches the focuses above)
-i=0
-for focus in "Correctness and edge cases" "Design and architecture" "Error handling and robustness"; do
-  echo "### \$focus"; cat "\$d/\$i.txt"; echo; i=\$((i + 1))
+wait; i=0
+for focus in "Correctness" "Design" "Error handling"; do
+  echo "### $focus"; cat "$d/$i.txt"; echo; i=$((i + 1))
 done
-rm -rf "\$d"
+rm -rf "$d"
 \`\`\`
 
 ### Tips
