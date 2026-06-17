@@ -9,7 +9,8 @@
     "extensions": ["./index.ts"]
   },
   "scripts": {
-    "check": "tsc --noEmit"
+    "check": "tsc --noEmit",
+    "test": "node --test"
   },
   "keywords": [
     "pi",
