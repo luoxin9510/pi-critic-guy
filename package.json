@@ -9,8 +9,8 @@
     "extensions": ["./index.ts"]
   },
   "scripts": {
-    "build": "echo 'nothing to build'",
-    "check": "echo 'nothing to check'"
+    "check": "tsc --noEmit",
+    "test": "node --test"
   },
   "keywords": [
     "pi",
@@ -22,12 +22,10 @@
   "license": "MIT",
   "files": [
     "index.ts",
-    "SKILL.md",
     "README.md"
   ],
   "devDependencies": {
-    "@earendil-works/pi-coding-agent": "latest",
-    "typebox": "latest",
+    "@earendil-works/pi-coding-agent": "^0.79.6",
     "typescript": "^5.5.0"
   }
 }
