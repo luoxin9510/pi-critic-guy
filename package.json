@@ -22,12 +22,10 @@
   "license": "MIT",
   "files": [
     "index.ts",
-    "SKILL.md",
     "README.md"
   ],
   "devDependencies": {
     "@earendil-works/pi-coding-agent": "latest",
-    "typebox": "latest",
     "typescript": "^5.5.0"
   }
 }
