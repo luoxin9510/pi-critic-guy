@@ -9,8 +9,7 @@
     "extensions": ["./index.ts"]
   },
   "scripts": {
-    "build": "echo 'nothing to build'",
-    "check": "echo 'nothing to check'"
+    "check": "tsc --noEmit"
   },
   "keywords": [
     "pi",
@@ -25,7 +24,7 @@
     "README.md"
   ],
   "devDependencies": {
-    "@earendil-works/pi-coding-agent": "latest",
+    "@earendil-works/pi-coding-agent": "^0.79.6",
     "typescript": "^5.5.0"
   }
 }
