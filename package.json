@@ -22,7 +22,8 @@
   "license": "MIT",
   "files": [
     "index.ts",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "devDependencies": {
     "@earendil-works/pi-coding-agent": "^0.79.6",
