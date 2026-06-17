@@ -1,0 +1,33 @@
+{
+  "name": "pi-critic-guy",
+  "version": "1.0.0",
+  "description": "Critic Guy — spawn subagent critics to review code, design, and content",
+  "type": "module",
+  "main": "./index.ts",
+  "types": "./index.ts",
+  "pi": {
+    "extensions": ["./index.ts"]
+  },
+  "scripts": {
+    "build": "echo 'nothing to build'",
+    "check": "echo 'nothing to check'"
+  },
+  "keywords": [
+    "pi",
+    "extension",
+    "critic",
+    "code-review",
+    "subagent"
+  ],
+  "license": "MIT",
+  "files": [
+    "index.ts",
+    "SKILL.md",
+    "README.md"
+  ],
+  "devDependencies": {
+    "@earendil-works/pi-coding-agent": "latest",
+    "typebox": "latest",
+    "typescript": "^5.5.0"
+  }
+}
