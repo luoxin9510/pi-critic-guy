@@ -44,21 +44,30 @@ it cannot edit files, write files, or run arbitrary shell commands.
 
 ### How to spawn a critic
 
+**Single review** (small scope):
 \`\`\`bash
 pi -p --no-session -nc --model "${modelId}" --tools ${CRITIC_TOOLS} \\
   --append-system-prompt "You are Critic Guy — an independent reviewer. Analyze the content and give your honest assessment. Decide what matters most. Be direct and constructive. Support your points with specifics." \\
   "Task: <describe what to review — include concrete file paths so the critic can read them>"
 \`\`\`
 
-In the default (text) mode, \`pi -p\` prints **only the critic's final assessment** as
-plain text on stdout — no JSON parsing needed. If the command exits non-zero, its
-output will explain why (usually a missing API key or an unknown model id).
+**Parallel reviews** (large scope — split into focused subagents):
+\`\`\`bash
+# Each subagent reviews a different aspect — output is small and readable
+for focus in "Correctness and edge cases" "Design and architecture" "Error handling and robustness"; do
+  pi -p --no-session -nc --model "${modelId}" --tools ${CRITIC_TOOLS} \\
+    --append-system-prompt "You are Critic Guy — an independent reviewer." \\
+    "Task: Review <target>. Focus exclusively on: \$focus" &
+done
+wait
+\`\`\`
 
 ### Tips
 - Model: \`${modelId}\` (resolved by the extension — use as-is).
-- The critic only has read-only file access, so give it concrete paths or paste the
-  content to review directly into the Task.
-- Multiple passes: run several in parallel with different focuses.
+- **Large content → parallel agents**. One agent reviewing everything is slow and
+  produces truncated output. Split into focused subagents instead.
+- Give each critic **concrete file paths** so it can use read-only tools (${CRITIC_TOOLS}).
+- Default text mode prints just the final assessment — no truncation for focused reviews.
 `;
 
 /**
@@ -114,39 +123,54 @@ function parseModelQuery(prompt: string): string {
 	return "";
 }
 
+const CRITIC_MARKER = "## Capability: Critic Guy (subagent review)";
+
 export default function (pi: ExtensionAPI) {
 	pi.on("before_agent_start", async (event, ctx) => {
-		// Safe guard: prompt may be undefined
-		if (!event.prompt) return undefined;
+		try {
+			// Safe guard: prompt may be undefined
+			if (!event.prompt) return undefined;
 
-		// Word boundary: only match standalone "critic", not "critical"/"criticism"
-		if (!/\bcritic\b/i.test(event.prompt)) {
+			// Word boundary: only match standalone "critic", not "critical"/"criticism"
+			if (!/\bcritic\b/i.test(event.prompt)) {
+				return undefined;
+			}
+
+			// Length protection: skip if system prompt is too large
+			if (event.systemPrompt.length > MAX_SYSTEM_PROMPT_CHARS) {
+				return undefined;
+			}
+
+			// Dedup: skip if already injected in this turn
+			if (event.systemPrompt.includes(CRITIC_MARKER)) {
+				return undefined;
+			}
+
+			// Resolve model: user-specified > current session > fallback
+			const currentModelId = ctx.model?.id;
+			const availableModels = ctx.modelRegistry?.getAvailable() ?? [];
+			const modelQuery = parseModelQuery(event.prompt);
+			const matchedModelId = modelQuery ? matchModel(modelQuery, availableModels) : null;
+			const modelId = matchedModelId || currentModelId || FALLBACK_MODEL;
+
+			// If the user named a model but we couldn't match it, don't substitute
+			// silently — tell the LLM so it can flag the fallback to the user.
+			const unmatchedNote =
+				modelQuery && !matchedModelId
+					? `\n> Note: the requested model "${modelQuery}" did not match any available model; falling back to \`${modelId}\`. Mention this to the user.\n`
+					: "";
+
+			const newSystemPrompt = event.systemPrompt + CRITIC_INSTRUCTIONS(modelId) + unmatchedNote;
+
+			// Post-injection length check
+			if (newSystemPrompt.length > MAX_SYSTEM_PROMPT_CHARS + 5000) {
+				return undefined;
+			}
+
+			return { systemPrompt: newSystemPrompt };
+		} catch (err) {
+			console.warn("[Critic Guy] injection failed:", err);
 			return undefined;
 		}
-
-		// Length protection: skip if system prompt is too large. The systemPrompt
-		// replacement is per-turn, so injecting on every critic turn keeps the
-		// capability available even after a compaction drops earlier turns.
-		if (event.systemPrompt.length > MAX_SYSTEM_PROMPT_CHARS) {
-			return undefined;
-		}
-
-		// Resolve model: user-specified > current session > fallback
-		const currentModelId = ctx.model?.id;
-		const availableModels = ctx.modelRegistry.getAvailable();
-		const modelQuery = parseModelQuery(event.prompt);
-		const matchedModelId = modelQuery ? matchModel(modelQuery, availableModels) : null;
-		const modelId = matchedModelId || currentModelId || FALLBACK_MODEL;
-
-		// If the user named a model but we couldn't match it, don't substitute
-		// silently — tell the LLM so it can flag the fallback to the user.
-		const unmatchedNote =
-			modelQuery && !matchedModelId
-				? `\n> Note: the requested model "${modelQuery}" did not match any available model; falling back to \`${modelId}\`. Mention this to the user.\n`
-				: "";
-
-		return {
-			systemPrompt: event.systemPrompt + CRITIC_INSTRUCTIONS(modelId) + unmatchedNote,
-		};
 	});
 }
