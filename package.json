@@ -1,32 +1,22 @@
 {
-  "name": "pi-critic-guy",
-  "version": "1.0.0",
-  "description": "Critic Guy — spawn subagent critics to review code, design, and content",
-  "type": "module",
-  "main": "./index.ts",
-  "types": "./index.ts",
-  "pi": {
-    "extensions": ["./index.ts"]
-  },
-  "scripts": {
-    "check": "tsc --noEmit",
-    "test": "node --test"
-  },
-  "keywords": [
-    "pi",
-    "extension",
-    "critic",
-    "code-review",
-    "subagent"
-  ],
+  "name": "@nuckcole/pi-critic-guy",
+  "version": "0.1.0",
+  "private": false,
+  "description": "Pi extension — spawn a second-opinion reviewer by typing \"critic\"",
+  "keywords": ["pi-package", "pi", "critic", "review", "code-review"],
   "license": "MIT",
-  "files": [
-    "index.ts",
-    "README.md",
-    "LICENSE"
-  ],
-  "devDependencies": {
-    "@earendil-works/pi-coding-agent": "^0.79.6",
-    "typescript": "^5.5.0"
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nuckcole/pi-critic-guy.git"
+  },
+  "files": ["extensions", "README.md", "LICENSE"],
+  "publishConfig": {
+    "access": "public"
+  },
+  "pi": {
+    "extensions": ["./extensions"]
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": ">=0.79"
   }
 }

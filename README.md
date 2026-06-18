@@ -1,71 +1,56 @@
-# 🧐 Critic Guy
+# pi-critic-guy
 
-A pi extension that activates **only when the user types "critic"**.
+Pi extension — spawn a second-opinion code reviewer by typing `critic` into your pi session.
 
-## How It Works
-
-```
-用户: "帮忙 critic 一下这段代码"
-        ↓
-before_agent_start hook → 检测到 "critic"
-        ↓
-注入 critic 指令到 system prompt（仅本轮，每次提到 critic 都注入）
-        ↓
-LLM 看到能力，用 bash spawn 一个独立 pi 子进程（命令模板由扩展注入，含解析好的模型）：
-  pi -p --offline -ne --no-session -nc --model "<resolved>" \
-     --tools read,grep,find,ls --append-system-prompt "..." "Task: review..."
-        ↓
-子进程只有只读工具（read/grep/find/ls）——不能改文件、不能跑任意命令
-        ↓
-text 模式直接输出评论纯文本 → LLM 展示给用户
-```
-
-> `--offline -ne` 是必须的：跳过 pi 的启动期网络操作（否则子进程冷启动可能卡几分钟），
-> 并避免在子进程里重复加载本扩展。大范围 review 时，扩展会指导 LLM **拆成多个并行子 agent**，
-> 各自写独立文件后汇总，避免输出交错。
-
-**用户没说 "critic" 时 → 零开销，不影响任何对话。**
-
-## 只读保证
-
-critic 子进程用 `--tools read,grep,find,ls`,这正是 pi 内置的只读工具集——
-不包含 `bash`/`edit`/`write`,所以它无法修改工作区或执行任意命令，只能读取和检索代码做评审。
-
-## 前置条件
-
-critic 子进程会真的调一次模型 API，所以**至少要有一个可用的 provider 凭证**
-（pi 里 `/login`，或对应 provider 的 API key env）。没有任何凭证时 spawn 出的
-子进程会直接失败。
-
-## 安装
-
-这是一个本地 extension,用 pi 的 install 命令指向本目录即可：
+## Install
 
 ```bash
-pi install /path/to/pi-critic-guy
+# From npm (once published)
+pi add @nuckcole/pi-critic-guy
+
+# Or from local path during development
+pi add /path/to/pi-critic-guy
 ```
 
-模型选择是动态的：扩展会按「用户指定 > 当前会话模型 > registry 首个可用 > 兜底模型」
-自动解析，无需配置环境变量。想临时指定模型，直接在 prompt 里写即可（见下）。
+## Usage
 
-## 使用
-
-用户只需要在 prompt 里包含 "critic" 一词：
+In any pi session, just type:
 
 ```
-用户: "critic 一下这段代码"
-用户: "帮我 critic review auth 模块"
-用户: "让 Critic Guy 看看这个设计"
+critic
+critic review the auth code
+critic model=deepseek-v4-flash review the error handling
+critic using claude check for security issues
 ```
 
-指定 critic 用哪个模型（可选）：
+The extension injects "Critic Guy" instructions into the system prompt on turns where you mention `critic`. It resolves the model dynamically from your current session, the model registry, or the model you specify via `using <name>` or `model=<id>`.
 
-```
-用户: "critic using claude"
-用户: "critic model=deepseek 看看这段实现"
-```
+### What it does
 
-LLM 会自动读取扩展注入的指令，用 `pi` CLI spawn 子进程进行 review。
+- Detects the word `critic` in your prompt (word boundary, won't match "critical")
+- Resolves the reviewer model (your current model, or one you specify)
+- Injects instructions to spawn a subagent via the `subagent` tool
+- Keeps the reviewer on a short leash — read-only tools (`read`, `grep`, `find`, `ls`)
+
+### Parallel reviews
+
+For large codebases, the injected instructions tell the LLM to split the review into parallel subagents focusing on different aspects (correctness, design, error handling).
+
+## How it works
+
+The extension hooks into `before_agent_start`. When `critic` is detected:
+
+1. It appends a "Capability: Critic Guy" section to the system prompt
+2. The capability tells the LLM to spawn a `reviewer` subagent
+3. The reviewer runs in an isolated context with read-only tools
+
+The reviewer agent is defined in your pi agent directory (`~/.pi/agent/agents/reviewer.md`). It uses `claude-sonnet-4-5` and has access to `bash` for `git diff`.
+
+## Requirements
+
+- pi 0.79+
+- `subagent` extension enabled (built-in example, see `pi subagent list`)
+- `reviewer` agent defined (example at `packages/coding-agent/examples/extensions/subagent/agents/reviewer.md`)
 
 ## License
 
