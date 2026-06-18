@@ -1,6 +1,6 @@
 {
   "name": "@nukcole-xinluo9510/pi-critic-guy",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "private": false,
   "type": "module",
   "description": "Pi extension — spawn a second-opinion reviewer by typing \"critic\"",
