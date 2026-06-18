@@ -2,12 +2,17 @@
   "name": "@nuckcole/pi-critic-guy",
   "version": "0.1.0",
   "private": false,
+  "type": "module",
   "description": "Pi extension — spawn a second-opinion reviewer by typing \"critic\"",
   "keywords": ["pi-package", "pi", "critic", "review", "code-review"],
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/nuckcole/pi-critic-guy.git"
+  },
+  "scripts": {
+    "check": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test test/index.test.ts"
   },
   "files": ["extensions", "README.md", "LICENSE"],
   "publishConfig": {

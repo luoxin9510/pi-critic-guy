@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { matchModel, parseModelQuery } from "../index.ts";
+import { matchModel, parseModelQuery } from "../extensions/critic-guy.ts";
 
 const MODELS = [
 	{ id: "claude-sonnet-4-20250514", name: "Claude Sonnet 4" },
