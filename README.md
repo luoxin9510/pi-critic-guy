@@ -5,8 +5,8 @@ Pi extension — spawn a second-opinion code reviewer by typing `critic` into yo
 ## Install
 
 ```bash
-# From npm (once published)
-pi add @nuckcole/pi-critic-guy
+# From npm
+pi add npm:pi-critic-guy
 
 # Or from local path during development
 pi add /path/to/pi-critic-guy

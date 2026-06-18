@@ -1,5 +1,5 @@
 {
-  "name": "@nuckcole/pi-critic-guy",
+  "name": "pi-critic-guy",
   "version": "0.1.0",
   "private": false,
   "type": "module",
@@ -8,7 +8,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/nuckcole/pi-critic-guy.git"
+    "url": "git+https://github.com/luoxin9510/pi-critic-guy.git"
   },
   "scripts": {
     "check": "tsc --noEmit",
