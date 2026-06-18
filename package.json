@@ -1,10 +1,16 @@
 {
   "name": "@nukcole-xinluo9510/pi-critic-guy",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": false,
   "type": "module",
   "description": "Pi extension — spawn a second-opinion reviewer by typing \"critic\"",
-  "keywords": ["pi-package", "pi", "critic", "review", "code-review"],
+  "keywords": [
+    "pi-package",
+    "pi",
+    "critic",
+    "review",
+    "code-review"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -14,12 +20,18 @@
     "check": "tsc --noEmit",
     "test": "node --experimental-strip-types --test test/index.test.ts"
   },
-  "files": ["extensions", "README.md", "LICENSE"],
+  "files": [
+    "extensions",
+    "README.md",
+    "LICENSE"
+  ],
   "publishConfig": {
     "access": "public"
   },
   "pi": {
-    "extensions": ["./extensions"]
+    "extensions": [
+      "./extensions"
+    ]
   },
   "peerDependencies": {
     "@earendil-works/pi-coding-agent": ">=0.79"
