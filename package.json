@@ -31,7 +31,8 @@
   "pi": {
     "extensions": [
       "./extensions"
-    ]
+    ],
+    "image": "https://raw.githubusercontent.com/luoxin9510/pi-critic-guy/main/assets/philosophy.png"
   },
   "peerDependencies": {
     "@earendil-works/pi-coding-agent": ">=0.79"
