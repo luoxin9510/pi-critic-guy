@@ -44,59 +44,30 @@ const CRITIC_INSTRUCTIONS = (modelId: string) => `
 
 ${CRITIC_MARKER}
 
-You can spawn an independent critic subagent for a second opinion.
-It runs in a fresh pi session with **read-only tools only** (${CRITIC_TOOLS}) —
-it cannot edit files, write files, or run arbitrary shell commands.
+When the user says "critic", you can spawn one or more independent critic
+subagents for a second opinion. Each runs in a fresh, read-only pi session
+(tools: ${CRITIC_TOOLS}) — it cannot edit files, write files, or run shell commands.
 
-### When the user says "critic"
+**You decide how to run the review** — the user doesn't need to specify:
+- **What to review**: pick the most valuable target from the current conversation.
+- **How to split it**: one critic for a focused review, or several in parallel
+  (each on a different angle) when the scope is large. Your judgment.
 
-1. **Look at the current conversation** — what code, design, or content have we been discussing?
-2. **Pick the most valuable thing to review** — the user doesn't need to specify; you decide.
-3. **Spawn a critic subagent** using the command below.
-4. **Present the critique** to the user.
+Spawn a critic with this invocation. The flags are the hard boundary — keep them
+as-is: \`--offline -ne\` stops the child hanging on startup, and the read-only
+\`--tools\` keep it from mutating anything or running commands.
 
-### How to spawn a critic
-
-**Using the \`subagent\` tool** (preferred when available — handles output, avoids shell escaping):
-\`\`\`json
-{
-  "agent": "reviewer",
-  "task": "Read <concrete file paths> first. NEVER assume features that aren't in the code. Review based only on what you actually read. Focus on <specific angle>."
-}
-\`\`\`
-Critic Guy persona is already loaded by the subagent's system prompt, so use a concise task.
-Give the subagent concrete file paths and tell it to read files first — this prevents
-hallucinations where the reviewer reports tests or features that don't exist.
-
-**Using bash** (always works; \`--offline -ne\` skips network ops so the child doesn't hang):
 \`\`\`bash
 pi -p --offline -ne --no-session -nc --model "${modelId}" --tools ${CRITIC_TOOLS} \\
   --append-system-prompt "${CRITIC_PERSONA}" \\
-  "Task: <describe what to review — include concrete file paths so the critic can read them>"
+  "Task: <what to review — name concrete file paths and tell the critic to read them first>"
 \`\`\`
 
-**Parallel reviews** (large scope — split into focused subagents):
-\`\`\`bash
-d=$(mktemp -d); i=0
-for focus in "Correctness" "Design" "Error handling"; do
-  pi -p --offline -ne --no-session -nc --model "${modelId}" --tools ${CRITIC_TOOLS} \\
-    --append-system-prompt "${CRITIC_PERSONA}" \\
-    "Task: Review <target>. Focus exclusively on: $focus" > "$d/$i.txt" 2>&1 &
-  i=$((i + 1))
-done
-wait; i=0
-for focus in "Correctness" "Design" "Error handling"; do
-  echo "### $focus"; cat "$d/$i.txt"; echo; i=$((i + 1))
-done
-rm -rf "$d"
-\`\`\`
+Always give the critic concrete file paths and tell it to read them before judging;
+this stops it inventing features or tests that aren't in the code. Run multiple in
+parallel however you see fit, then present the critique(s) to the user.
 
-### Tips
-- Model: \`${modelId}\` (resolved by the extension — use as-is).
-- **Large content → parallel agents**. One agent reviewing everything is slow and
-  produces truncated output. Split into focused subagents instead.
-- Give each critic **concrete file paths** so it can use read-only tools (${CRITIC_TOOLS}).
-- Default text mode prints just the final assessment — no truncation for focused reviews.
+Model: \`${modelId}\` (resolved by the extension — use as-is).
 `;
 
 // Shown (instead of silent no-op) when the system prompt is too large to inject into.
